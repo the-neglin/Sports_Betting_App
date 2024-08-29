@@ -150,15 +150,34 @@ def get_user_id(name, email):
 
     if not user_id.empty:
         print(user_id.iloc[0, 0])
+        putters.insert_blank_picks(get_game_ids(user_id.iloc[0, 0]))
         return user_id.iloc[0, 0]
     else:
         print("User not found. Adding user...")
         user_id = putters.insert_user(name=name, email=email)
         if user_id:
             print(f"User added successfully with ID: {user_id}")
+            putters.insert_blank_picks(get_game_ids(user_id))
             return user_id
         else:
             print("Failed to add user.")
             return None
 
     return
+
+def get_game_ids(user_id):
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+
+    try:
+        engine = create_engine(connection_string)
+    except Exception as e:
+        print(f"Error creating engine: {e}")
+
+    sql_query = """
+    select odds.game_id from odds;
+    """
+
+    game_ids_df = pd.read_sql(sql_query, con=engine)
+    game_ids_df['user_id'] = user_id
+    
+    return game_ids_df

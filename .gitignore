@@ -163,4 +163,4 @@ cython_debug/
 
 
 #scratch files
-*scratch*
+scratch.ipynb

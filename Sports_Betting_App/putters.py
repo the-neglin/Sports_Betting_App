@@ -31,8 +31,36 @@ def insert_user(name, email):
             result = connection.execute(insert_query)
             connection.commit()
             
+            user_id = result.inserted_primary_key[0]
+            return user_id
+
+    except SQLAlchemyError as e:
+        print(f"Error interacting with the database: {e}")
+        return None
+    
+def insert_blank_picks(game_df):
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+
+    try:
+        engine = create_engine(connection_string)
+
+        with engine.connect() as connection:
+            metadata = MetaData()
+            picks_table = Table('picks', metadata, autoload_with=engine)
+            
+            # Convert the DataFrame to a list of dictionaries, where each dictionary represents a row
+            data_to_insert = game_df.to_dict(orient='records')
+
+            # Perform the bulk insert operation
+            insert_query = picks_table.insert().values(data_to_insert)
+            result = connection.execute(insert_query)
+            connection.commit()
+
+            print(f"Loaded {result.rowcount} blank picks")
             return
 
     except SQLAlchemyError as e:
         print(f"Error interacting with the database: {e}")
         return None
+
+    return
