@@ -31,24 +31,21 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
-    
-    
+
     @render.table
     def scores():
         return getters.get_leaderboard()
 
-    
     @reactive.Calc
     def name():
         return input.name().strip()
-    
+
     @reactive.Calc
     def email():
         return input.email().strip()
-    
+
     loaded_data = reactive.Value(None)
 
-    
     @reactive.Effect
     @reactive.event(input.load_picks, ignore_none=True)
     def _():
@@ -56,17 +53,16 @@ def server(input, output, session):
         data = getters.get_odds(name=name(), email=email())
         loaded_data.set(data)
         print("Loaded odds data:", data)
-        
-        
+
     @output
     @render.ui
-    @reactive.event(loaded_data)  
+    @reactive.event(loaded_data)
     def table_ui():
         df = loaded_data.get()
 
         if df.empty:
             return ui.HTML("<p>No data available. Please press 'Load Picks'.</p>")
-        
+
         table_rows = []
         for i, row in df.iterrows():
             table_rows.append(
@@ -78,29 +74,29 @@ def server(input, output, session):
                     ui.tags.td(
                         ui.input_select(
                             f"spread_pick_{i}",
-                            label="",  
+                            label="",
                             choices=["None", "Favorite", "Underdog"],
-                            selected=row["Spread Pick"],selectize=True, width='93%'
+                            selected=row["Spread Pick"], selectize=True, width='93%'
                         )
                     ),
                     ui.tags.td(
                         ui.input_checkbox(
                             f"double_down_{i}",
-                            label="Double?", 
-                            value=row["Double Down?"],width='50%'
+                            label="Double?",
+                            value=row["Double Down?"], width='50%'
                         )
                     ),
                     ui.tags.td(
                         ui.input_select(
                             f"over_under_pick_{i}",
-                            label="", 
+                            label="",
                             choices=["None", "Over", "Under"],
-                            selected=row["Over/Under Pick"],selectize=True,width='80%'
+                            selected=row["Over/Under Pick"], selectize=True, width='80%'
                         )
                     )
                 )
             )
-        
+
         table = ui.tags.table(
             ui.tags.thead(
                 ui.tags.tr(
@@ -115,13 +111,12 @@ def server(input, output, session):
             ),
             ui.tags.tbody(*table_rows)
         )
-        
+
         return table
-    
-    @output
-    @render.text
-    @reactive.event(loaded_data)
-    def table_data():
+
+    @reactive.Effect
+    @reactive.event(input.submit_picks)
+    def update_data():
         df = loaded_data.get()
         updated_data = []
         for i in range(len(df)):
@@ -134,6 +129,17 @@ def server(input, output, session):
                 "Double Down?": input[f"double_down_{i}"](),
                 "Over/Under Pick": input[f"over_under_pick_{i}"](),
             })
-        return pd.DataFrame(updated_data).to_string(index=False)
+
+        updated_df = pd.DataFrame(updated_data)
+        loaded_data.set(updated_df)
+        print("Updated picks:", updated_df)
+
+    @output
+    @render.text
+    @reactive.event(loaded_data)
+    def table_data():
+        df = loaded_data.get()
+        return df.to_string(index=False)    
+
 
 app = App(app_ui, server)
