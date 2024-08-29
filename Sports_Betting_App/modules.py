@@ -108,8 +108,8 @@ def main_tab():
                 </div>
             """)),
             ui.p(ui.row(
-                    ui.column(8, ui.input_text('name', 'Name', '', width=6)),
-                    ui.column(8, ui.input_text('email', 'Email', '', width=6)),
+                    ui.column(12, ui.input_text('name', 'Name', '', width=12)),
+                    ui.column(12, ui.input_text('email', 'Email', '', width=12)),
                     style="text-align: center;"
                 )),
             ui.card_footer(

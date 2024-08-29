@@ -23,6 +23,7 @@ app_ui = ui.page_fluid(
             ui.output_table("scores"),
             open='always',
             position='right',
+            width=325
         ),
     ui.HTML("""<h1><strong>Nick's Massive Pickem</strong></h1>"""),
     ui.navset_tab(*modules.nav_controls("navset_tab()"), selected='Main')
@@ -79,14 +80,14 @@ def server(input, output, session):
                             f"spread_pick_{i}",
                             label="",  
                             choices=["None", "Favorite", "Underdog"],
-                            selected=row["Spread Pick"]
+                            selected=row["Spread Pick"],selectize=True, width='93%'
                         )
                     ),
                     ui.tags.td(
                         ui.input_checkbox(
                             f"double_down_{i}",
                             label="Double?", 
-                            value=row["Double Down?"]
+                            value=row["Double Down?"],width='50%'
                         )
                     ),
                     ui.tags.td(
@@ -94,7 +95,7 @@ def server(input, output, session):
                             f"over_under_pick_{i}",
                             label="", 
                             choices=["None", "Over", "Under"],
-                            selected=row["Over/Under Pick"]
+                            selected=row["Over/Under Pick"],selectize=True,width='80%'
                         )
                     )
                 )

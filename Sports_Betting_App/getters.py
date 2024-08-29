@@ -70,7 +70,7 @@ def get_odds(name, email):
         print(f"Error creating engine: {e}")
 
     sql_query = f"""
-    select odds.time, odds.favorite, odds.spread, odds.underdog, odds.over_under, picks.choice_id, picks.dd, picks.over_under_id, picks.user_id, odds.week, odds.game_id from odds
+    select distinct odds.time, odds.favorite, odds.spread, odds.underdog, odds.over_under, picks.choice_id, picks.dd, picks.over_under_id, picks.user_id, odds.week, odds.game_id from odds
     left join picks on picks.game_id = odds.game_id
     where odds.week = '{get_week()}'
     and picks.user_id = '{get_user_id(name=name, email=email)}';
