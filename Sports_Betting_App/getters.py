@@ -1,7 +1,10 @@
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, Table, select, insert
 import os
 from datetime import datetime, timedelta
+from sqlalchemy.exc import SQLAlchemyError
+import putters
+
 
 DATABASE_TYPE = os.getenv("DATABASE_TYPE")
 DBAPI = os.getenv("DBAPI")
@@ -54,8 +57,12 @@ def get_last_score():
     return score
 
 
-def get_odds():
+def get_odds(name, email):
     
+    name = name
+    email = email
+    
+    print(f'name = {name} and email = {email}')
     connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
 
     try:
@@ -66,7 +73,8 @@ def get_odds():
     sql_query = f"""
     select odds.time, odds.favorite, odds.spread, odds.underdog, odds.over_under, picks.choice_id, picks.dd, picks.over_under_id, picks.user_id, odds.week, odds.game_id from odds
     left join picks on picks.game_id = odds.game_id
-    where odds.week = {get_week()};
+    where odds.week = '{get_week()}'
+    and picks.user_id = '{get_user_id(name=name, email=email)}';
     """
 
     odds_df = pd.read_sql(sql_query, con=engine)
@@ -119,3 +127,38 @@ def get_week():
     current_week = get_current_week(nfl_weeks, today_date)
     
     return current_week
+
+
+def get_user_id(name, email):
+    
+    name = name
+    email = email
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+
+    try:
+        engine = create_engine(connection_string)
+    except Exception as e:
+        print(f"Error creating engine: {e}")
+
+    sql_query = f"""
+    select users.id from users
+    where users.name = '{name}'
+    and users.email = '{email}';
+    """
+
+    user_id = pd.read_sql(sql_query, con=engine)
+
+    if not user_id.empty:
+        print(user_id.iloc[0, 0])
+        return user_id.iloc[0, 0]
+    else:
+        print("User not found. Adding user...")
+        user_id = putters.insert_user(name=name, email=email)
+        if user_id:
+            print(f"User added successfully with ID: {user_id}")
+            return user_id
+        else:
+            print("Failed to add user.")
+            return None
+
+    return

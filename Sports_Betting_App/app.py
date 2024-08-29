@@ -1,4 +1,4 @@
-from shiny import App, render, ui
+from shiny import App, render, ui, reactive
 from shinyswatch import theme
 import getters
 import modules
@@ -31,30 +31,43 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
-    df = getters.get_odds()
+    
+    
     @render.table
     def scores():
         return getters.get_leaderboard()
-    
-    
-    #NEED TO UPDATE
-    # @reactive.effect
-    # @reactive.event(input.name)
-    # def set_button_state():
-    #     if input.name():
-    #         ui.update_action_button("greet", disabled=False)
-    #     else:
-    #         ui.update_action_button("greet", disabled=True)
 
-    # @render.ui
-    # @reactive.event(input.greet)
-    # def hello():
-    #     return ui.p(f"Hello, {input.name()}!", class_="fs-1 text-primary mt-3")
     
+    @reactive.Calc
+    def name():
+        return input.name().strip()
     
+    @reactive.Calc
+    def email():
+        return input.email().strip()
+    
+    loaded_data = reactive.Value(None)
+
+    
+    @reactive.Effect
+    @reactive.event(input.load_picks, ignore_none=True)
+    def _():
+        print("Getting odds data...")
+        data = getters.get_odds(name=name(), email=email())
+        loaded_data.set(data)
+        print("Loaded odds data:", data)
+        
+        
     @output
     @render.ui
+    @reactive.event(loaded_data)  # Table UI reacts to loaded data
     def table_ui():
+        # Use the loaded data for rendering
+        df = loaded_data.get()
+
+        if df.empty:
+            return ui.HTML("<p>No data available. Please press 'Load Picks'.</p>")
+        
         # Create the UI for each row of the table
         table_rows = []
         for i, row in df.iterrows():
@@ -79,7 +92,7 @@ def server(input, output, session):
                             value=row["Double Down?"]
                         )
                     ),
-                                        ui.tags.td(
+                    ui.tags.td(
                         ui.input_select(
                             f"over_under_pick_{i}",
                             label="",  # Add an empty label or provide a specific label
@@ -110,8 +123,10 @@ def server(input, output, session):
     
     @output
     @render.text
+    @reactive.event(loaded_data)  # Capture the data only after the table has been loaded
     def table_data():
         # Capture the data from the inputs
+        df = loaded_data.get()
         updated_data = []
         for i in range(len(df)):
             updated_data.append({
@@ -125,7 +140,4 @@ def server(input, output, session):
             })
         return pd.DataFrame(updated_data).to_string(index=False)
 
-
-
 app = App(app_ui, server)
-
