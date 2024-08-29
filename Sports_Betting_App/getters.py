@@ -1,8 +1,7 @@
 import pandas as pd
-from sqlalchemy import create_engine, MetaData, Table, select, insert
+from sqlalchemy import create_engine
 import os
 from datetime import datetime, timedelta
-from sqlalchemy.exc import SQLAlchemyError
 import putters
 
 
@@ -106,24 +105,20 @@ def get_week():
 
     def get_current_week(nfl_weeks, today_date):
         if today_date < nfl_weeks[0]['Start Date']:
-            return 1  # Default to Week 1 if today is before the season starts
+            return 1
 
         for week in nfl_weeks:
             if week['Start Date'] <= today_date <= week['End Date']:
                 return week['Week']
         return None
 
-    # Define the start and end dates of the NFL season
-    season_start = datetime(2024, 9, 4)  # Example start date
-    season_end = datetime(2025, 1, 7)    # Example end date
+    season_start = datetime(2024, 9, 4)
+    season_end = datetime(2025, 1, 7)
 
-    # Get the list of NFL weeks
     nfl_weeks = get_nfl_weeks(season_start, season_end)
 
-    # Get today's date
     today_date = datetime.now()
 
-    # Determine the current NFL week
     current_week = get_current_week(nfl_weeks, today_date)
     
     return current_week

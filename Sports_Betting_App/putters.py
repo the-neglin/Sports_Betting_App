@@ -1,9 +1,6 @@
-import pandas as pd
 from sqlalchemy import create_engine, insert, Table, MetaData
 from sqlalchemy.exc import SQLAlchemyError
 import os
-import getters
-
 
 DATABASE_TYPE = os.getenv("DATABASE_TYPE")
 DBAPI = os.getenv("DBAPI")
@@ -22,12 +19,11 @@ def insert_user(name, email):
         engine = create_engine(connection_string)
 
         with engine.connect() as connection:
-            # Create an insert query
             metadata = MetaData()
 
             users_table = Table('users', metadata, autoload_with=engine)
             insert_query = insert(users_table).values(email=f"'{email}'", name=f"'{name}'")
-            compiled = insert_query.compile()
+            compiled = insert_query.compile()  # noqa: F841
             result = connection.execute(insert_query)
             connection.commit()
             
@@ -48,10 +44,8 @@ def insert_blank_picks(game_df):
             metadata = MetaData()
             picks_table = Table('picks', metadata, autoload_with=engine)
             
-            # Convert the DataFrame to a list of dictionaries, where each dictionary represents a row
             data_to_insert = game_df.to_dict(orient='records')
 
-            # Perform the bulk insert operation
             insert_query = picks_table.insert().values(data_to_insert)
             result = connection.execute(insert_query)
             connection.commit()

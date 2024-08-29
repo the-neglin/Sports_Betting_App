@@ -3,7 +3,6 @@ from shinyswatch import theme
 import getters
 import modules
 import pandas as pd
-# import putters
 
 app_ui = ui.page_fluid(
     theme.superhero(),
@@ -60,15 +59,13 @@ def server(input, output, session):
         
     @output
     @render.ui
-    @reactive.event(loaded_data)  # Table UI reacts to loaded data
+    @reactive.event(loaded_data)  
     def table_ui():
-        # Use the loaded data for rendering
         df = loaded_data.get()
 
         if df.empty:
             return ui.HTML("<p>No data available. Please press 'Load Picks'.</p>")
         
-        # Create the UI for each row of the table
         table_rows = []
         for i, row in df.iterrows():
             table_rows.append(
@@ -80,7 +77,7 @@ def server(input, output, session):
                     ui.tags.td(
                         ui.input_select(
                             f"spread_pick_{i}",
-                            label="",  # Add an empty label or provide a specific label
+                            label="",  
                             choices=["None", "Favorite", "Underdog"],
                             selected=row["Spread Pick"]
                         )
@@ -95,7 +92,7 @@ def server(input, output, session):
                     ui.tags.td(
                         ui.input_select(
                             f"over_under_pick_{i}",
-                            label="",  # Add an empty label or provide a specific label
+                            label="", 
                             choices=["None", "Over", "Under"],
                             selected=row["Over/Under Pick"]
                         )
@@ -103,7 +100,6 @@ def server(input, output, session):
                 )
             )
         
-        # Create the table with header and rows
         table = ui.tags.table(
             ui.tags.thead(
                 ui.tags.tr(
@@ -123,9 +119,8 @@ def server(input, output, session):
     
     @output
     @render.text
-    @reactive.event(loaded_data)  # Capture the data only after the table has been loaded
+    @reactive.event(loaded_data)
     def table_data():
-        # Capture the data from the inputs
         df = loaded_data.get()
         updated_data = []
         for i in range(len(df)):
