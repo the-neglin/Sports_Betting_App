@@ -78,14 +78,14 @@ def server(input, output, session):
                             f"spread_pick_{i}",
                             label="",
                             choices=["None", "Favorite", "Underdog"],
-                            selected=row["Spread Pick"], selectize=True, width='93%'
+                            selected=row.get("Spread Pick", "None"), selectize=True, width='93%'
                         )
                     ),
                     ui.tags.td(
                         ui.input_checkbox(
                             f"double_down_{i}",
                             label="Double?",
-                            value=row["Double Down?"], width='50%'
+                            value=row.get("Double Down?", False), width='50%'
                         )
                     ),
                     ui.tags.td(
@@ -93,7 +93,7 @@ def server(input, output, session):
                             f"over_under_pick_{i}",
                             label="",
                             choices=["None", "Over", "Under"],
-                            selected=row["Over/Under Pick"], selectize=True, width='80%'
+                            selected=row.get("Over/Under Pick", "None"), selectize=True, width='80%'
                         )
                     )
                 )
@@ -137,19 +137,6 @@ def server(input, output, session):
             })
 
         updated_df = pd.DataFrame(updated_data)
-
-        updated_df.loc[updated_df["Spread Pick"] == "Favorite", "Spread Pick"] = 1
-        updated_df.loc[updated_df["Spread Pick"] == "Underdog", "Spread Pick"] = 2
-        updated_df.loc[updated_df["Spread Pick"] == "None", "Spread Pick"] = 0
-
-        updated_df.loc[updated_df["Over/Under Pick"] == "Over", "Over/Under Pick"] = 1
-        updated_df.loc[updated_df["Over/Under Pick"] == "Under", "Over/Under Pick"] = 2
-        updated_df.loc[updated_df["Over/Under Pick"] == "None", "Over/Under Pick"] = 0
-
-        updated_df["Double Down?"] = updated_df["Double Down?"].astype(str)
-
-        updated_df.loc[updated_df["Double Down?"] == "True", "Double Down?"] = 1
-        updated_df.loc[updated_df["Double Down?"] == "False", "Double Down?"] = 0
 
         loaded_data.set(updated_df)
         putters.put_picks(updated_df)

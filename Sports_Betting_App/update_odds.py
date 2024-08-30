@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 from datetime import datetime
+import getters
 import pytz
 import os
 from sqlalchemy import create_engine, text
@@ -212,6 +213,122 @@ def save_scores(processed_scores):
                 ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST;
             """))
 
+
+def get_odds():
+    
+    DATABASE_TYPE = os.getenv("DATABASE_TYPE")
+    DBAPI = os.getenv("DBAPI")
+    ENDPOINT = os.getenv("ENDPOINT")
+    USER = os.getenv("USER")
+    PASSWORD = os.getenv("PASSWD")
+    PORT = os.getenv("PORT")
+    DATABASE = os.getenv("DATABASE")
+
+    
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+
+    try:
+        engine = create_engine(connection_string)
+    except Exception as e:
+        print(f"Error creating engine: {e}")
+
+    sql_query = """
+    select distinct odds.time, odds.favorite, odds.spread, odds.underdog, odds.over_under, picks.choice_id, picks.dd, picks.over_under_id, picks.user_id, odds.week, odds.game_id from odds
+    left join picks on picks.game_id = odds.game_id;
+    """
+
+    odds_df = pd.read_sql(sql_query, con=engine)
+    odds_df = odds_df.rename(columns={'time': 'Time', 'favorite': 'Favorite', 'spread': 'Spread', 'underdog': 'Underdog', 'over_under': 'Over/Under',
+                                      'choice_id': 'Spread Pick', 'dd': 'Double Down?', 'over_under_id': 'Over/Under Pick'})
+    print('Successfully retrieved odds!')
+    return odds_df  
+
+def calculate_scores():
+    DATABASE_TYPE = os.getenv("DATABASE_TYPE")
+    DBAPI = os.getenv("DBAPI")
+    ENDPOINT = os.getenv("ENDPOINT")
+    USER = os.getenv("USER")
+    PASSWORD = os.getenv("PASSWD")
+    PORT = os.getenv("PORT")
+    DATABASE = os.getenv("DATABASE")
+
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+    engine = create_engine(connection_string)
+
+    # Fetch game results
+    game_results_query = "SELECT * FROM game_results"
+    game_results_df = pd.read_sql(game_results_query, con=engine)
+    picks_df = get_odds()
+    if game_results_df.empty:
+        picks_df['score'] = 0
+        final_df = picks_df.groupby('user_id', as_index=False)['score'].sum()
+        return final_df
+    else:
+
+        merged_df = pd.merge(picks_df, game_results_df, on=['game_id', 'user_id'])
+
+        merged_df['score'] = 0
+
+        for idx, row in merged_df.iterrows():
+            spread_score = 0
+            over_under_score = 0
+
+            if row['Spread Pick'] == 'Favorite' and row['spread_win'] == 1:
+                spread_score = 1
+            elif row['Spread Pick'] == 'Underdog' and row['spread_win'] == 2:
+                spread_score = 1
+            elif row['Spread Pick'] != 'None':
+                spread_score = -1
+
+            if row['Over/Under Pick'] == 'Over' and row['over_under_win'] == 1:
+                over_under_score = 1
+            elif row['Over/Under Pick'] == 'Under' and row['over_under_win'] == 2:
+                over_under_score = 1
+            elif row['Over/Under Pick'] != 'None':
+                over_under_score = -1
+
+            total_score = spread_score + over_under_score
+
+            if row['Double Down?']:
+                total_score *= 2
+
+            merged_df.at[idx, 'score'] = total_score
+            
+            merged_df = merged_df[['game_id', 'user_id', 'score']]
+
+            final_df = merged_df.groupby('user_id', as_index=False)['score'].sum()
+
+            return final_df
+    return  
+
+def save_user_score(final_df):
+    
+    final_df['score_date'] = datetime.now()
+
+    DATABASE_TYPE = os.getenv("DATABASE_TYPE")
+    DBAPI = os.getenv("DBAPI")
+    ENDPOINT = os.getenv("ENDPOINT")
+    USER = os.getenv("USER")
+    PASSWORD = os.getenv("PASSWD")
+    PORT = os.getenv("PORT")
+    DATABASE = os.getenv("DATABASE")
+
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+    engine = create_engine(connection_string)
+
+    final_df.to_sql('scores', con=engine, if_exists='replace', index=False)
+    if not final_df.empty:
+        final_df.to_sql('scores', con=engine, if_exists='replace', index=False)
+        
+        with engine.connect() as connection:
+            connection.execute(text("""
+                ALTER TABLE scores 
+                ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST;
+            """))
+    print('Scores successfully saved to the database!')
+    return
+
+
 def main():
     odds_data = fetch_odds()
     processed_odds = process_odds(odds_data)
@@ -219,5 +336,7 @@ def main():
     scores_data = fetch_scores()
     processed_scores = process_scores(scores_data, processed_odds)
     save_scores(processed_scores)
+    user_scores = calculate_scores()
+    save_user_score(user_scores)
 if __name__ == '__main__':
     main()

@@ -23,8 +23,8 @@ def insert_user(name, email):
             metadata = MetaData()
 
             users_table = Table('users', metadata, autoload_with=engine)
-            insert_query = insert(users_table).values(email=f"'{email}'", name=f"'{name}'")
-            compiled = insert_query.compile()  # noqa: F841
+            insert_query = insert(users_table).values(email=f"{email}", name=f"{name}")
+            compiled = insert_query.compile()
             result = connection.execute(insert_query)
             connection.commit()
             
