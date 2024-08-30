@@ -78,7 +78,7 @@ def intro():
         <li><strong>Last Place</strong>: 15%—yes, even the person who picks every game wrong gets a little something. Hey, we’ve all had those seasons!</li>
     </ul>
 
-    <p>Entry fee is still just a crisp $20. Last year, we had 85 participants and a prize pool of over $1,600. This year, let’s aim for a pot so big it makes the Super Bowl look like a backyard scrimmage!</p>
+    <p>Entry fee is still just a crisp $20. Let’s aim for a pot so big it makes the Super Bowl look like a backyard scrimmage!</p>
 
     <p>Pay up via cash, mail, or Venmo me at <a href="https://venmo.com/Nicholas-Eglin">@Nicholas-Eglin</a>. Don’t forget to include your name and email so I know who’s in the game.</p>
 

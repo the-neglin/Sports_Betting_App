@@ -1,6 +1,7 @@
 from shiny import App, render, ui, reactive
 from shinyswatch import theme
 import getters
+import putters
 import modules
 import pandas as pd
 
@@ -71,6 +72,7 @@ def server(input, output, session):
                     ui.tags.td(row["Favorite"]),
                     ui.tags.td(row["Spread"]),
                     ui.tags.td(row["Underdog"]),
+                    ui.tags.td(row["Over/Under"]),
                     ui.tags.td(
                         ui.input_select(
                             f"spread_pick_{i}",
@@ -104,6 +106,7 @@ def server(input, output, session):
                     ui.tags.th("Favorite"),
                     ui.tags.th("Spread"),
                     ui.tags.th("Underdog"),
+                    ui.tags.th("Over/Under"),
                     ui.tags.th("Spread Pick"),
                     ui.tags.th("Double Down?"),
                     ui.tags.th("Over/Under Pick"),
@@ -125,13 +128,31 @@ def server(input, output, session):
                 "Favorite": df.at[i, "Favorite"],
                 "Spread": df.at[i, "Spread"],
                 "Underdog": df.at[i, "Underdog"],
+                "Over/Under": df.at[i, "Over/Under"],
                 "Spread Pick": input[f"spread_pick_{i}"](),
                 "Double Down?": input[f"double_down_{i}"](),
                 "Over/Under Pick": input[f"over_under_pick_{i}"](),
+                "user_id": df.at[i, "user_id"],
+                "game_id": df.at[i, "game_id"],
             })
 
         updated_df = pd.DataFrame(updated_data)
+
+        updated_df.loc[updated_df["Spread Pick"] == "Favorite", "Spread Pick"] = 1
+        updated_df.loc[updated_df["Spread Pick"] == "Underdog", "Spread Pick"] = 2
+        updated_df.loc[updated_df["Spread Pick"] == "None", "Spread Pick"] = 0
+
+        updated_df.loc[updated_df["Over/Under Pick"] == "Over", "Over/Under Pick"] = 1
+        updated_df.loc[updated_df["Over/Under Pick"] == "Under", "Over/Under Pick"] = 2
+        updated_df.loc[updated_df["Over/Under Pick"] == "None", "Over/Under Pick"] = 0
+
+        updated_df["Double Down?"] = updated_df["Double Down?"].astype(str)
+
+        updated_df.loc[updated_df["Double Down?"] == "True", "Double Down?"] = 1
+        updated_df.loc[updated_df["Double Down?"] == "False", "Double Down?"] = 0
+
         loaded_data.set(updated_df)
+        putters.put_picks(updated_df)
         print("Updated picks:", updated_df)
 
     @output
@@ -139,7 +160,7 @@ def server(input, output, session):
     @reactive.event(loaded_data)
     def table_data():
         df = loaded_data.get()
-        return df.to_string(index=False)    
+        return df.to_string(index=False)
 
 
 app = App(app_ui, server)

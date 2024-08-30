@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, insert, Table, MetaData
+from sqlalchemy import create_engine, insert, Table, MetaData, update
 from sqlalchemy.exc import SQLAlchemyError
 import os
+from sqlalchemy.orm import sessionmaker
 
 DATABASE_TYPE = os.getenv("DATABASE_TYPE")
 DBAPI = os.getenv("DBAPI")
@@ -57,4 +58,41 @@ def insert_blank_picks(game_df):
         print(f"Error interacting with the database: {e}")
         return None
 
+    return
+
+def put_picks(picks_df):
+    connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
+
+    try:
+        engine = create_engine(connection_string)
+
+        with engine.connect() as connection:
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            metadata = MetaData()
+            picks_table = Table('picks', metadata, autoload_with=engine)
+
+            for index, row in picks_df.iterrows():
+                stmt = (
+                    update(picks_table)
+                    .where(
+                        picks_table.c.user_id == row['user_id'], 
+                        picks_table.c.game_id == row['game_id']
+                    )
+                    .values({
+                        'choice_id': row['Spread Pick'],
+                        'dd': row['Double Down?'],
+                        'over_under_id': row['Over/Under Pick']
+                    })
+                )
+                session.execute(stmt)
+
+            session.commit()
+            session.close()
+            print("Picks saved successfully...")
+            return
+    except SQLAlchemyError as e:
+        print(f"Error interacting with the database: {e}")
+        return None
+    
     return

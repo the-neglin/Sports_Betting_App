@@ -1,6 +1,8 @@
-pandas
-shiny
-pytz
-sqlalchemy
-os
-datetime
+#Python Version
+# python_version >= 3.12
+
+#Core Dependencies
+pandas==2.1.0
+shiny==0.2.2
+pytz==2023.3
+sqlalchemy==2.0.19

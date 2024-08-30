@@ -203,13 +203,14 @@ def save_scores(processed_scores):
     engine = create_engine(connection_string)
 
     df = pd.DataFrame(processed_scores)
-    df.to_sql('game_results', con=engine, if_exists='replace', index=False)
-    
-    with engine.connect() as connection:
-        connection.execute(text("""
-            ALTER TABLE game_results 
-            ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST;
-        """))
+    if not df.empty:
+        df.to_sql('game_results', con=engine, if_exists='replace', index=False)
+        
+        with engine.connect() as connection:
+            connection.execute(text("""
+                ALTER TABLE game_results 
+                ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST;
+            """))
 
 def main():
     odds_data = fetch_odds()
