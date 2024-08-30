@@ -30,7 +30,7 @@ def insert_user(name, email):
 
             users_table = Table('users', metadata, autoload_with=engine)
             insert_query = insert(users_table).values(email=f"{email}", name=f"{name}")
-            compiled = insert_query.compile()
+            compiled = insert_query.compile()  # noqa: F841
             result = connection.execute(insert_query)
             connection.commit()
             
@@ -72,7 +72,7 @@ def put_picks(picks_df):
     try:
         engine = create_engine(connection_string)
 
-        with engine.connect() as connection:
+        with engine.connect() as connection:  # noqa: F841
             Session = sessionmaker(bind=engine)
             session = Session()
             metadata = MetaData()

@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 from datetime import datetime
-import getters
+import getters  # noqa: F401
 import pytz
 import os
 from sqlalchemy import create_engine, text
@@ -45,7 +45,7 @@ def process_odds(data):
         game_time = datetime.fromisoformat(game_time_utc[:-1]).replace(tzinfo=pytz.utc)
         game_time_central = game_time.astimezone(central_tz)
         home_team = game['home_team']
-        away_team = game['away_team']
+        away_team = game['away_team']  # noqa: F841
         favorite = None
         underdog = None
         highest_negative_spread = None
@@ -141,7 +141,7 @@ def process_scores(scores_data, processed_odds):
     df = pd.DataFrame(scores_data)
     
     # Filter completed games
-    completed_games = df[df['completed'] == True]
+    completed_games = df[df['completed'] == True]  # noqa: E712
 
     results = []
     for _, row in completed_games.iterrows():
