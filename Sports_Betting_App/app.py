@@ -3,10 +3,16 @@ from shinyswatch import theme
 import getters
 import putters
 import modules
+import js_scripts
 import pandas as pd
 
 app_ui = ui.page_fluid(
-    theme.superhero(),
+    theme.minty(),
+    ui.tags.head(
+        ui.tags.script(js_scripts.load_notice()),
+        ui.tags.script(js_scripts.submit_notice()),
+        
+        ),
     ui.tags.style(
         """
         table.dataframe {
@@ -24,7 +30,7 @@ app_ui = ui.page_fluid(
             ui.output_table("scores"),
             open='always',
             position='right',
-            width=325
+            width=330
         ),
     ui.HTML("""<h1><strong>Nick's Massive Pickem</strong></h1>"""),
     ui.navset_tab(*modules.nav_controls("navset_tab()"), selected='Main')
@@ -95,7 +101,7 @@ def server(input, output, session):
                             choices=["None", "Over", "Under"],
                             selected=row.get("Over/Under Pick", "None"), selectize=True, width='80%'
                         )
-                    )
+                    ),
                 )
             )
 
@@ -110,12 +116,16 @@ def server(input, output, session):
                     ui.tags.th("Spread Pick"),
                     ui.tags.th("Double Down?"),
                     ui.tags.th("Over/Under Pick"),
-                )
+                ),
             ),
             ui.tags.tbody(*table_rows)
         )
 
-        return table
+        return ui.tags.div(
+        table,
+        ui.tags.script(js_scripts.double_check()),
+        ui.tags.script(js_scripts.too_late()),
+        )
 
     @reactive.Effect
     @reactive.event(input.submit_picks)
@@ -140,6 +150,7 @@ def server(input, output, session):
 
         loaded_data.set(updated_df)
         putters.put_picks(updated_df)
+        putters.send_email(updated_df, name=name(), email=email())
         print("Updated picks:", updated_df)
 
     @output
@@ -148,6 +159,8 @@ def server(input, output, session):
     def table_data():
         df = loaded_data.get()
         return df.to_string(index=False)
-
-
+    
+    
+ 
 app = App(app_ui, server)
+    

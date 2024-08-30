@@ -3,7 +3,9 @@ from sqlalchemy import create_engine
 import os
 from datetime import datetime, timedelta
 import putters
+from dotenv import load_dotenv
 
+load_dotenv()
 
 DATABASE_TYPE = os.getenv("DATABASE_TYPE")
 DBAPI = os.getenv("DBAPI")
@@ -40,6 +42,14 @@ def get_leaderboard():
     return df
 
 def get_last_score():
+    
+    DATABASE_TYPE = os.getenv("DATABASE_TYPE")
+    DBAPI = os.getenv("DBAPI")
+    ENDPOINT = os.getenv("ENDPOINT")
+    USER = os.getenv("USER")
+    PASSWORD = os.getenv("PASSWD")
+    PORT = os.getenv("PORT")
+    DATABASE = os.getenv("DATABASE")
 
     print("Gettings latest score datetime...")
     connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
@@ -55,7 +65,7 @@ def get_last_score():
 
     df = pd.read_sql(sql_query, con=engine)
     if not df.empty:
-        score = df.iloc[0,0].strftime("%m/%d/%Y, %H:%M:%S")
+        score = df.iloc[0,0]
         print("Successfully retrieved latest score datetime!")
         return score
     else:
