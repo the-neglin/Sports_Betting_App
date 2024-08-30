@@ -2,6 +2,7 @@ from shiny import ui
 from typing import List
 from shiny.types import NavSetArg
 import getters
+import js_scripts
 
 def nav_controls(prefix: str) -> List[NavSetArg]:
     return [
@@ -98,6 +99,7 @@ def main_tab():
                 <div style="text-align: center;">
                     <h2>🏈Week {week_number}🏈</h2>
                     <ol style="display: inline-block; text-align: left;">
+                        <li>Enter your name (use the same one each week)</li>
                         <li>Enter your email (use the same one each week)</li>
                         <li><strong>CLICK</strong> Load Picks</li>
                         <li>Choose the teams you think will beat the spread</li>
@@ -112,14 +114,15 @@ def main_tab():
                     ui.column(12, ui.input_text('email', 'Email', '', width=12)),
                     style="text-align: center;"
                 )),
-            ui.card_footer(
-                ui.input_action_button('load_picks', 'Load Picks', class_="btn-success", style="display: block; margin: 0 auto;")
+                ui.card_footer(
+                ui.input_action_button('load_picks', 'Load Picks', class_="btn-success", style="display: block; margin: 0 auto;", disabled=True),
+                ui.tags.script(js_scripts.form_completion()),
+
             ),
             full_screen=True,
         ),
         ui.card(
             ui.p(
-                # Editable table UI
                 ui.output_ui("table_ui"),
             ),
             ui.card_footer(

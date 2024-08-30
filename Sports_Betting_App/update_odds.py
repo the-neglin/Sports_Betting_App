@@ -5,7 +5,9 @@ import getters
 import pytz
 import os
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def fetch_odds():
     api_key = os.getenv("ODDS_API")
@@ -79,7 +81,7 @@ def process_odds(data):
                         over_under = f"+/- {outcomes[0]['point']}"
 
         week = calculate_week(game_time)
-        formatted_time = game_time_central.strftime('%A %I:%M %p')
+        formatted_time = game_time_central.strftime('%A, %m/%d %I:%M %p CT')
         games_list.append({
             'game_id': game_id,
             'time': formatted_time,
@@ -302,8 +304,11 @@ def calculate_scores():
     return  
 
 def save_user_score(final_df):
-    
-    final_df['score_date'] = datetime.now()
+    central_tz = pytz.timezone('America/Chicago')
+    score_time = datetime.now()
+    score_time_central = score_time.astimezone(central_tz)
+    score_time_formatted = score_time_central.strftime('%m/%d/%Y, %I:%M:%S %p')
+    final_df['score_date'] = score_time_formatted
 
     DATABASE_TYPE = os.getenv("DATABASE_TYPE")
     DBAPI = os.getenv("DBAPI")
@@ -316,7 +321,6 @@ def save_user_score(final_df):
     connection_string = f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}"
     engine = create_engine(connection_string)
 
-    final_df.to_sql('scores', con=engine, if_exists='replace', index=False)
     if not final_df.empty:
         final_df.to_sql('scores', con=engine, if_exists='replace', index=False)
         
@@ -325,8 +329,9 @@ def save_user_score(final_df):
                 ALTER TABLE scores 
                 ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST;
             """))
-    print('Scores successfully saved to the database!')
-    return
+        print('Scores successfully saved to the database!')
+    else:
+        return
 
 
 def main():

@@ -6,3 +6,4 @@ pandas==2.1.0
 shiny==0.2.2
 pytz==2023.3
 sqlalchemy==2.0.19
+dotenv==1.0.0
